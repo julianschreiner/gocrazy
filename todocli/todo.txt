@@ -1,0 +1,26 @@
+Project: Todo CLI
+Scope: Add, list, complete; save as JSON
+Learning topics: Structs, serialization, persistent state
+
+
+Requirements:
+
+1. Core	Add, list, complete, and delete tasks	Structs, slices, functions, error handling
+
+2. Persistence	Save tasks to JSON; load on startup	File I/O, serialization, handling missing or invalid files
+
+3. Usability	Edit tasks, filter by status, helpful usage messages	Argument parsing, flags, input validation
+
+4. Organization	Priorities, tags, due dates, sorting	Custom types, time parsing, sorting
+
+5. Reliability	Unit tests, temporary-file storage tests, meaningful exit codes	Go testing, dependency boundaries, CLI conventions
+
+6. Stretch	SQLite storage, search, import/export	SQL, migrations, backward compatibility
+
+
+command examples:
+todo add "Learn Go interfaces"
+todo list --status pending
+todo done 1
+todo edit 1 --title "Practice Go interfaces"
+todo delete 1

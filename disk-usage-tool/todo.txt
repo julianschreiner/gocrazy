@@ -1,0 +1,3 @@
+Project: Disk-usage tool
+Scope: Report directory sizes, sorted largest first
+Learning topics: Aggregation, sorting, filesystem traversal

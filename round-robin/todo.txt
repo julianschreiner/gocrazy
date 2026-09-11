@@ -1,0 +1,37 @@
+round-robin algorithm in go
+Round Robin is a CPU scheduling algorithm where each process gets a small fixed amount of CPU time called a time quantum.
+
+Example:
+
+Processes:
+P1 = 5ms
+P2 = 4ms
+P3 = 2ms
+
+Quantum = 2ms
+
+Scheduler runs them in a circle:
+P1 runs 2ms → 3ms left
+P2 runs 2ms → 2ms left
+P3 runs 2ms → finished
+
+P1 runs 2ms → 1ms left
+P2 runs 2ms → finished
+
+P1 runs 1ms → finished
+
+Execution order is: P1 → P2 → P3 → P1 → P2 → P1
+
+Internally round robin is usually a FIFO queue:
+
+Queue:
+[P1, P2, P3]
+
+Run P1
+[P2, P3, P1]
+
+Run P2
+[P3, P1, P2]
+
+Run P3 (finished)
+[P1, P2]

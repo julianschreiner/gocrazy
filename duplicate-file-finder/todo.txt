@@ -1,0 +1,3 @@
+Project: Duplicate-file finder
+Scope: Group by size, compare hashes; report duplicates
+Learning topics: Hashing, maps, staged processing

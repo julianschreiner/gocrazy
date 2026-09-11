@@ -1,0 +1,10 @@
+Project: HTTP client
+Scope: URL → status, headers, body; request timeout
+Learning topics: HTTP, context, streaming, cleanup
+
+
+Deps needed:
+net.HTTP (making requests)
+io.Copy (streaming)
+flag (pass timeout, body, method)
+httptest.NewServer (testing)

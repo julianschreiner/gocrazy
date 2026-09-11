@@ -1,0 +1,3 @@
+Project: Uptime checker
+Scope: Check several URLs and report availability
+Learning topics: Goroutines, bounded concurrency, cancellation
