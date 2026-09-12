@@ -12,7 +12,20 @@ routes:
     path_prefix: /users
     upstream_pool: users-service
 
+  - name: orders-read
+    methods: [GET]
+    path_prefix: /orders
+    upstream_pool: orders-service
+
+  - name: orders-write
+    methods: [POST]
+    path_prefix: /orders
+    upstream_pool: orders-service
+
 upstream_pools:
   - name: users-service
     targets:
-      - http://localhost:8081
+      - http://127.0.0.1:8081
+  - name: orders-service
+    targets:
+      - http://127.0.0.1:8082
