@@ -179,3 +179,49 @@ func TestForwardReusesConnectionsAcrossBursts(t *testing.T) {
 		t.Errorf("opened %d upstream connections for two bursts; want %d reused connections", got, concurrency)
 	}
 }
+
+func TestForwardExpiresIdleUpstreamConnections(t *testing.T) {
+	closed := make(chan struct{}, 1)
+	var connections atomic.Int64
+	backend := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = io.WriteString(w, "ok")
+	}))
+	backend.Config.ConnState = func(_ net.Conn, state http.ConnState) {
+		switch state {
+		case http.StateNew:
+			connections.Add(1)
+		case http.StateClosed:
+			select {
+			case closed <- struct{}{}:
+			default:
+			}
+		}
+	}
+	backend.Start()
+	t.Cleanup(backend.Close)
+	p, err := New([]Pool{{Name: "users", Targets: []string{backend.URL}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	forward := func() {
+		t.Helper()
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		response := httptest.NewRecorder()
+		p.Forward(response, httptest.NewRequest(http.MethodGet, "/users", nil).WithContext(ctx), "users")
+		if response.Code != http.StatusOK || response.Body.String() != "ok" {
+			t.Fatalf("response = %d %q, want 200 ok", response.Code, response.Body.String())
+		}
+	}
+	forward()
+	// This backend has no idle timeout, so closure must come from the gateway.
+	select {
+	case <-closed:
+	case <-time.After(6 * time.Second):
+		t.Fatal("gateway retained the idle upstream connection beyond its expiry window")
+	}
+	forward()
+	if got := connections.Load(); got != 2 {
+		t.Errorf("upstream connections = %d, want a fresh connection after idle expiry", got)
+	}
+}

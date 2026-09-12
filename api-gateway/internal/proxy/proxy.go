@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"time"
 )
 
 type Pool struct {
@@ -31,6 +32,9 @@ func New(pools []Pool) (*Proxy, error) {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	transport.MaxIdleConns = 1024
 	transport.MaxIdleConnsPerHost = 512
+	// Retire idle connections before the test backends' five-second keep-alive
+	// timeout to reduce races with an upstream closing a connection during reuse.
+	transport.IdleConnTimeout = 4 * time.Second
 
 	for _, pool := range pools {
 		if len(pool.Targets) != 1 {
