@@ -148,7 +148,7 @@ func (d *dashboard) render(out io.Writer, baseURL string, rate, concurrency int,
 	total := d.stats["users"].completed + d.stats["orders"].completed
 	fmt.Fprintf(&b, "GATEWAY TRAFFIC   %s   elapsed %.0fs\n", baseURL, elapsed)
 	fmt.Fprintf(&b, "Target %d req/s | concurrency limit %d | completed %d (%.1f/s) | skipped %d\n\n", rate, concurrency, total, float64(total)/elapsed, d.skipped)
-	b.WriteString("Traffic -> gateway -> users  :8081\n                   -> orders :8082\n\n")
+	b.WriteString("Traffic -> gateway -> /users\n                   -> /orders\n\n")
 	b.WriteString("SERVICE  TRAFFIC SHARE           IN FLIGHT  DONE  ERRORS   AVG CLIENT  AVG GATEWAY\n")
 	for _, name := range []string{"users", "orders"} {
 		s := d.stats[name]
