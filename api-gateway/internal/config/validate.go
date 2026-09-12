@@ -33,7 +33,9 @@ func (c *Config) Validate() error {
 			}
 		}
 	}
-
+	// TODO:
+	// validate that two routes do not define the same path and overlapping methods.
+	// otherwise router.Match would break
 	for _, route := range c.Routes {
 		if route.Name == "" {
 			return errors.New("route name is required")

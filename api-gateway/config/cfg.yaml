@@ -2,7 +2,13 @@ server:
   address: ":8080"
 
 routes:
-  - name: users
+  - name: users-read
+    methods: [GET]
+    path_prefix: /users
+    upstream_pool: users-service
+
+  - name: users-write
+    methods: [POST, PUT, DELETE]
     path_prefix: /users
     upstream_pool: users-service
 
