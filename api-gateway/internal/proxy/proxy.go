@@ -26,6 +26,12 @@ func New(pools []Pool) (*Proxy, error) {
 		return nil, fmt.Errorf("Proxy pool must not be empty")
 	}
 
+	// Retain upstream connections between bursts instead of falling back to
+	// Go's default of two idle connections per host. Share the pool across routes.
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.MaxIdleConns = 1024
+	transport.MaxIdleConnsPerHost = 512
+
 	for _, pool := range pools {
 		if len(pool.Targets) != 1 {
 			return nil, fmt.Errorf("Pool %q must have exactly one target", pool.Name)
@@ -40,7 +46,9 @@ func New(pools []Pool) (*Proxy, error) {
 			)
 		}
 
-		proxies[pool.Name] = httputil.NewSingleHostReverseProxy(target)
+		reverseProxy := httputil.NewSingleHostReverseProxy(target)
+		reverseProxy.Transport = transport
+		proxies[pool.Name] = reverseProxy
 	}
 
 	return &Proxy{

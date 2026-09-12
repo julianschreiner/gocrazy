@@ -1,12 +1,16 @@
 package proxy
 
 import (
+	"context"
 	"errors"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
+	"time"
 )
 
 func TestForward(t *testing.T) {
@@ -111,5 +115,67 @@ func TestForwardUpstreamFailure(t *testing.T) {
 	p.Forward(recorder, httptest.NewRequest(http.MethodGet, "/users", nil), "users")
 	if recorder.Code != http.StatusBadGateway {
 		t.Errorf("status = %d, want %d", recorder.Code, http.StatusBadGateway)
+	}
+}
+
+func TestForwardReusesConnectionsAcrossBursts(t *testing.T) {
+	const concurrency = 8
+	entered := make(chan struct{}, concurrency)
+	gates := map[string]chan struct{}{"first": make(chan struct{}), "second": make(chan struct{})}
+	var connections atomic.Int64
+	backend := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		entered <- struct{}{}
+		select {
+		case <-gates[r.URL.Query().Get("wave")]:
+		case <-r.Context().Done():
+			return
+		}
+		_, _ = io.WriteString(w, "ok")
+	}))
+	backend.Config.ConnState = func(_ net.Conn, state http.ConnState) {
+		if state == http.StateNew {
+			connections.Add(1)
+		}
+	}
+	backend.Start()
+	t.Cleanup(backend.Close)
+	p, err := New([]Pool{{Name: "users", Targets: []string{backend.URL}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	for _, wave := range []string{"first", "second"} {
+		responses := make(chan *httptest.ResponseRecorder, concurrency)
+		for i := 0; i < concurrency; i++ {
+			go func() {
+				request := httptest.NewRequest(http.MethodGet, "/users?wave="+wave, nil).WithContext(ctx)
+				response := httptest.NewRecorder()
+				p.Forward(response, request, "users")
+				responses <- response
+			}()
+		}
+		// Hold every request open to require a whole burst of distinct connections.
+		for i := 0; i < concurrency; i++ {
+			select {
+			case <-entered:
+			case <-ctx.Done():
+				t.Fatal("burst did not reach backend")
+			}
+		}
+		close(gates[wave])
+		for i := 0; i < concurrency; i++ {
+			select {
+			case response := <-responses:
+				if response.Code != http.StatusOK || response.Body.String() != "ok" {
+					t.Errorf("response = %d %q, want 200 ok", response.Code, response.Body.String())
+				}
+			case <-ctx.Done():
+				t.Fatal("burst did not complete")
+			}
+		}
+	}
+	if got := connections.Load(); got != concurrency {
+		t.Errorf("opened %d upstream connections for two bursts; want %d reused connections", got, concurrency)
 	}
 }
