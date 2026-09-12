@@ -1,0 +1,12 @@
+server:
+  address: ":8080"
+
+routes:
+  - name: users
+    path_prefix: /users
+    upstream_pool: users-service
+
+upstream_pools:
+  - name: users-service
+    targets:
+      - http://localhost:8081
