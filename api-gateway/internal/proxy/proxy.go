@@ -56,6 +56,7 @@ func (p *Proxy) Forward(
 	reverseProxy, found := p.pools[upstreamPoolName]
 	if !found {
 		http.Error(w, "upstream pool not found", http.StatusBadGateway)
+		return
 	}
 
 	reverseProxy.ServeHTTP(w, r)
