@@ -28,6 +28,35 @@ to check how the gateway handles it.
 The routes and upstream addresses are in `config/cfg.yaml`. The integration
 tests use their own config in `config/integration.yaml`.
 
+To watch some traffic move through the gateway:
+
+```sh
+sh scripts/traffic-demo.sh
+```
+
+This starts the Compose backends and a demo gateway on a free local port using
+`config/cfg.yaml`. It uses the same gateway code as the normal command, so you
+can leave your gateway on 8080 running. The terminal shows traffic per service,
+in-flight counts, errors, and recent requests with client, gateway, and backend
+timings. Gateway time includes waiting for the backend; it isn't proxy overhead.
+The backend name comes from the response. In-flight counts show which route
+each request was sent to, before that response arrives.
+
+Requests go to users and orders, with delays between 80 and 699 ms. Every tenth
+request asks for a 503 so errors are visible too. The script restarts the two
+test backends to pick up changes to their code. Ctrl+C stops the demo gateway
+and traffic after pending requests finish, leaving the backends running.
+
+For a busier, one-minute run:
+
+```sh
+sh scripts/traffic-demo.sh -rate 30 -concurrency 20 -duration 1m
+```
+
+Use `-plain` for periodic text snapshots instead of a live terminal display.
+The rate is a target; requests are skipped if the concurrency limit is reached.
+You can also try delays manually with `/users?delay_ms=500` (maximum 2000 ms).
+
 Run unit tests:
 
 ```sh

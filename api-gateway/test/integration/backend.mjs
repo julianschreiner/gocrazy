@@ -3,6 +3,7 @@ import http from 'node:http';
 const service = process.env.SERVICE_NAME;
 
 http.createServer(async (req, res) => {
+  const started = performance.now();
   if (req.url === '/health') {
     res.writeHead(200).end('ok');
     return;
@@ -18,9 +19,17 @@ http.createServer(async (req, res) => {
     return;
   }
 
+  const delay = Number(url.searchParams.get('delay_ms') ?? 0);
+  if (!Number.isInteger(delay) || delay < 0 || delay > 2000) {
+    res.writeHead(400).end('delay_ms must be between 0 and 2000');
+    return;
+  }
+  if (delay > 0) await new Promise(resolve => setTimeout(resolve, delay));
+
   res.writeHead(status, {
     'Content-Type': 'application/json',
     'X-Backend': service,
+    'X-Backend-Duration-Ms': (performance.now() - started).toFixed(2),
   });
   res.end(JSON.stringify({
     service,
