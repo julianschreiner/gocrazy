@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"sync"
 	"time"
 )
 
@@ -36,6 +37,14 @@ func New(pools []Pool) (*Proxy, error) {
 	// timeout to reduce races with an upstream closing a connection during reuse.
 	transport.IdleConnTimeout = 4 * time.Second
 
+	bufferPool := &ProxyBufferPool{
+		pool: sync.Pool{
+			New: func() any {
+				return make([]byte, 32*1024)
+			},
+		},
+	}
+
 	for _, pool := range pools {
 		if len(pool.Targets) != 1 {
 			return nil, fmt.Errorf("Pool %q must have exactly one target", pool.Name)
@@ -52,6 +61,7 @@ func New(pools []Pool) (*Proxy, error) {
 
 		reverseProxy := httputil.NewSingleHostReverseProxy(target)
 		reverseProxy.Transport = transport
+		reverseProxy.BufferPool = bufferPool
 		proxies[pool.Name] = reverseProxy
 	}
 
