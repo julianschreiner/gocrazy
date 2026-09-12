@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"log"
+	"net/http"
 
 	"gateway/internal/config"
 	"gateway/internal/gateway"
@@ -17,8 +18,15 @@ func main() {
 		log.Fatal(err)
 	}
 
-	_ = gateway.New(cfg) // creates gateway -> creates router
+	gateway, err := gateway.New(cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	// TODO: add proxying, expose the gateway as an http.Handler,
-	// then start an HTTP server using cfg.Server.Address.
+	server := &http.Server{
+		Addr:    cfg.Server.Address,
+		Handler: gateway,
+	}
+
+	log.Fatal(server.ListenAndServe())
 }
