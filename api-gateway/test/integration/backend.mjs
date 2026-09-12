@@ -2,7 +2,7 @@ import http from 'node:http';
 
 const service = process.env.SERVICE_NAME;
 
-http.createServer(async (req, res) => {
+const server = http.createServer(async (req, res) => {
   const started = performance.now();
   if (req.url === '/health') {
     res.writeHead(200).end('ok');
@@ -40,3 +40,6 @@ http.createServer(async (req, res) => {
     request_id: req.headers['x-request-id'] ?? '',
   }) + '\n');
 }).listen(8080, '0.0.0.0');
+
+process.on('SIGTERM', () => server.close());
+process.on('SIGINT', () => server.close());

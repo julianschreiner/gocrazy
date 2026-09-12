@@ -63,9 +63,10 @@ func (d *dashboard) observe(next http.Handler) http.Handler {
 			if req == nil {
 				return
 			}
+			elapsed := milliseconds(time.Since(started))
 			d.Lock()
 			defer d.Unlock()
-			req.gatewayMS = milliseconds(time.Since(started))
+			req.gatewayMS = elapsed
 			stats := d.stats[req.service]
 			stats.gatewayCount++
 			stats.gatewayMS += req.gatewayMS
@@ -87,7 +88,7 @@ func (d *dashboard) send(ctx context.Context, client *http.Client, baseURL strin
 	}
 	delay := 80 + rand.IntN(620)
 	path := fmt.Sprintf("/%s?delay_ms=%d&status=%d", service, delay, status)
-	req := &request{id: strconv.Itoa(id), service: service, path: path, backend: "-", started: time.Now()}
+	req := &request{id: strconv.Itoa(id), service: service, path: path, backend: "-", gatewayMS: -1, started: time.Now()}
 	d.Lock()
 	d.active[req.id] = req
 	d.stats[service].active++
@@ -95,7 +96,7 @@ func (d *dashboard) send(ctx context.Context, client *http.Client, baseURL strin
 
 	outbound, err := http.NewRequestWithContext(ctx, http.MethodGet, baseURL+path, nil)
 	var code int
-	var backendMS float64
+	backendMS := -1.0
 	backend := "-"
 	if err == nil {
 		outbound.Header.Set("X-Request-ID", req.id)
@@ -106,16 +107,19 @@ func (d *dashboard) send(ctx context.Context, client *http.Client, baseURL strin
 			if name := response.Header.Get("X-Backend"); name != "" {
 				backend = name
 			}
-			backendMS, _ = strconv.ParseFloat(response.Header.Get("X-Backend-Duration-Ms"), 64)
+			if value, parseErr := strconv.ParseFloat(response.Header.Get("X-Backend-Duration-Ms"), 64); parseErr == nil {
+				backendMS = value
+			}
 			_, err = io.Copy(io.Discard, response.Body)
 			response.Body.Close()
 		}
 	}
 
+	elapsed := milliseconds(time.Since(req.started))
 	d.Lock()
 	defer d.Unlock()
 	req.status, req.backend, req.backendMS = code, backend, backendMS
-	req.clientMS = milliseconds(time.Since(req.started))
+	req.clientMS = elapsed
 	if err != nil {
 		req.failure = err.Error()
 	}
@@ -128,8 +132,8 @@ func (d *dashboard) send(ctx context.Context, client *http.Client, baseURL strin
 	}
 	delete(d.active, req.id)
 	d.recent = append(d.recent, req)
-	if len(d.recent) > 10 {
-		d.recent = d.recent[len(d.recent)-10:]
+	if len(d.recent) > 6 {
+		d.recent = d.recent[len(d.recent)-6:]
 	}
 }
 
@@ -169,14 +173,20 @@ func (d *dashboard) render(out io.Writer, baseURL string, rate, concurrency int,
 		if r.failure != "" {
 			status = "ERR"
 		}
-		fmt.Fprintf(&b, "%4s  %-7s  %6s %8.1f %9.1f %9.1f  %s\n", r.id, r.backend, status, r.clientMS, r.gatewayMS, r.backendMS, r.path)
+		fmt.Fprintf(&b, "%4s  %-7s  %6s %8.1f %9s %9s  %s\n", r.id, r.backend, status, r.clientMS, timing(r.gatewayMS), timing(r.backendMS), r.path)
 	}
 	b.WriteString("\nTimes are milliseconds. Gateway = handler time INCLUDING upstream wait.\n")
 	b.WriteString("Client = full round trip. Backend = reported processing time (includes demo delay).\n")
-	b.WriteString("In flight = requests sent toward each route; backend confirmed on completion.\n")
 	b.WriteString("Every 10th request asks for a 503. Skipped = concurrency limit reached.\n")
 	b.WriteString("Ctrl+C stops traffic and this demo gateway; Compose backends stay running.\n")
 	fmt.Fprint(out, b.String())
+}
+
+func timing(ms float64) string {
+	if ms < 0 {
+		return "-"
+	}
+	return fmt.Sprintf("%.1f", ms)
 }
 
 func main() {
