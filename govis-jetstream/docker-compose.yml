@@ -1,0 +1,79 @@
+services:
+  nats:
+    image: nats:2.14.6-alpine
+    command: ["-js", "-sd", "/data", "-m", "8222"]
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    volumes:
+      - jetstream:/data
+
+  setup:
+    build: .
+    command: ["setup"]
+    environment:
+      NATS_URL: nats://nats:4222
+    depends_on:
+      nats:
+        condition: service_started
+    restart: "no"
+
+  publisher:
+    build: .
+    command: ["publisher"]
+    environment:
+      NATS_URL: nats://nats:4222
+      PUBLISH_RATE: ${PUBLISH_RATE:-4}
+      BURST_SIZE: ${BURST_SIZE:-0}
+      BURST_EVERY: ${BURST_EVERY:-10s}
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  email-1:
+    build: .
+    command: ["worker", "email"]
+    environment:
+      NATS_URL: nats://nats:4222
+      PROCESS_DELAY: ${EMAIL_DELAY:-120ms}
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  email-2:
+    build: .
+    command: ["worker", "email"]
+    environment:
+      NATS_URL: nats://nats:4222
+      PROCESS_DELAY: ${EMAIL_DELAY:-120ms}
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  report:
+    build: .
+    command: ["worker", "report"]
+    environment:
+      NATS_URL: nats://nats:4222
+      PROCESS_DELAY: ${REPORT_DELAY:-350ms}
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  image:
+    build: .
+    command: ["worker", "image"]
+    environment:
+      NATS_URL: nats://nats:4222
+      PROCESS_DELAY: ${IMAGE_DELAY:-500ms}
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+volumes:
+  jetstream:
