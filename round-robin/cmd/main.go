@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"slices"
+	"strconv"
 	"time"
 
 	"github.com/julianschreiner/roundrobin/internal/process"
@@ -10,8 +13,13 @@ import (
 func main() {
 	// register processes so we can schedule them
 	queue := initQueue()
+	if queue.Quantum <= 0 {
+		fmt.Println("error queue.Quantum needs to be > 0")
+		os.Exit(1)
+	}
 	runScheduler(queue)
 
+	println("====== FINAL RESULT ======")
 	for _, p := range queue.Processes {
 		fmt.Printf(
 			"ProcessID: P%d used %v of Turnaround time, with a burst time of: %v\n",
@@ -36,21 +44,16 @@ func initQueue() *process.Queue {
 			process.CreateProcess(9, 288*time.Millisecond),
 			process.CreateProcess(10, 7*time.Millisecond),
 		},
-		Quantum: 2 * time.Millisecond,
+		Quantum: 3 * time.Millisecond,
 	}
 }
 
 func runScheduler(pq *process.Queue) {
-	var finishedProcesses int
 	start := time.Now()
-	// bonus later: print current order of processes
-	// bonus later: shift processes at the end of the slice when they finished their turn
-	// bonus later: remove processes when they finished their burst
-	for len(pq.Processes) > finishedProcesses {
-		for _, p := range pq.Processes {
-			if p.State == process.Finished {
-				continue
-			}
+	copiedProcesses := slices.Clone(pq.Processes)
+	for len(copiedProcesses) > 0 {
+		for _, p := range copiedProcesses {
+			printCurrentOrder(copiedProcesses)
 			p.State = process.Running
 			p.RemainingBurstTime = p.RemainingBurstTime - pq.Quantum
 			if p.RemainingBurstTime <= 0 {
@@ -58,11 +61,25 @@ func runScheduler(pq *process.Queue) {
 				p.State = process.Finished
 				p.RemainingBurstTime = 0
 				p.TurnAroundTime = time.Since(start)
-				finishedProcesses++
+				// process finished their burst, so remove it
+				copiedProcesses = copiedProcesses[1:]
 			} else {
 				time.Sleep(pq.Quantum) // simulate full quantum
 				p.State = process.Ready
+				// shift process at the end of the slice, as turn is finished
+				cp := p
+				copiedProcesses = copiedProcesses[1:]
+				copiedProcesses = append(copiedProcesses, cp)
 			}
 		}
 	}
+}
+
+func printCurrentOrder(cp []*process.Process) {
+	var processIDs []string
+	for _, p := range cp {
+		processIDs = append(processIDs, fmt.Sprintf("P%v (%v)", strconv.Itoa(int(p.ProcessID)), p.RemainingBurstTime))
+	}
+
+	fmt.Printf("Queue: %v\n", processIDs)
 }
