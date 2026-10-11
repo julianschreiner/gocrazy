@@ -71,7 +71,7 @@ func (l *Loop) handleEvent(event Event) error {
 		return nil
 	}
 
-	client, exists := l.clients[event.FD]
+	_, exists := l.clients[event.FD]
 	if !exists {
 		return nil // Client already removed.
 	}
@@ -81,7 +81,7 @@ func (l *Loop) handleEvent(event Event) error {
 	}
 
 	// handleRead() might have removed the client.
-	client, exists = l.clients[event.FD]
+	_, exists = l.clients[event.FD]
 	if !exists {
 		return nil
 	}
@@ -91,7 +91,7 @@ func (l *Loop) handleEvent(event Event) error {
 	}
 
 	// handleWrite() might have removed the client.
-	client, exists = l.clients[event.FD]
+	client, exists := l.clients[event.FD]
 	if !exists {
 		return nil
 	}

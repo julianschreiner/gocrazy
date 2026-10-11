@@ -8,6 +8,7 @@ import (
 	"github.com/julianschreiner/godis/internal/eventloop"
 	"github.com/julianschreiner/godis/internal/network"
 	"github.com/julianschreiner/godis/internal/protocol"
+	"github.com/julianschreiner/godis/internal/storage"
 	"golang.org/x/sys/unix"
 )
 
@@ -24,7 +25,10 @@ func main() {
 	}
 	defer pollerLinux.Close()
 
-	dispatcher := command.NewDispatcher(protocol.NewResp2Encoder())
+	dispatcher := command.NewDispatcher(
+		protocol.NewResp2Encoder(),
+		storage.NewStore(),
+	)
 	parser := protocol.NewResp2Parser()
 
 	eventLoop, err := eventloop.NewLoop(
