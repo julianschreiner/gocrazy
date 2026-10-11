@@ -2,9 +2,6 @@ package network
 
 import "golang.org/x/sys/unix"
 
-// non blocking TCP sockets
-// Create a non-blocking TCP listening socket.
-
 type Socket struct{}
 
 // ListenTCP creates a non-blocking TCP listening socket

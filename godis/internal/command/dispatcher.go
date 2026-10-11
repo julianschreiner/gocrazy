@@ -49,7 +49,7 @@ func (d *Dispatcher) handlePing(args [][]byte) []byte {
 func (d *Dispatcher) handleEcho(args [][]byte) []byte {
 	switch len(args) {
 	case 1:
-		return d.encoder.EncodeSimpleString(string(args[0]))
+		return d.encoder.EncodeBulkString(args[0])
 	default:
 		return d.encoder.EncodeError(
 			"ERR wrong number of arguments for 'echo' command",
