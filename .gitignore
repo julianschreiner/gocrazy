@@ -6,3 +6,6 @@
 
 # Compiled binaries
 bin/
+
+#GoLLVM
+/gollmvm

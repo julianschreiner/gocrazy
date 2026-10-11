@@ -1,0 +1,12 @@
+eventloop/
+├── poller.go
+│   └── Poller interface
+│       └── Event and Interest types
+│
+├── poller_linux.go
+│   └── EpollPoller struct
+│       └── Implements Poller using epoll
+│
+└── loop.go
+    └── Uses Poller
+        └── Dispatches events
