@@ -5,29 +5,52 @@ import (
 	"errors"
 	"math"
 	"strconv"
+	"time"
 )
 
+const DefaultTTL time.Duration = 1 * time.Hour
+
+type Entry struct {
+	Value     []byte
+	ExpiresAt *time.Time
+}
+
 type Store struct {
-	data map[string][]byte
+	data map[string]Entry
+}
+type EntryResult struct {
+	Data    *Entry
+	Exists  bool
+	Expired bool
 }
 
 func NewStore() *Store {
 	return &Store{
-		data: make(map[string][]byte),
+		data: make(map[string]Entry),
 	}
 }
 
-func (s *Store) Set(key string, value []byte) {
-	s.data[key] = bytes.Clone(value)
+func (s *Store) Set(key string, value []byte, expiresAt *time.Time) {
+	s.data[key] = Entry{
+		Value:     bytes.Clone(value),
+		ExpiresAt: expiresAt,
+	}
 }
 
 func (s *Store) Get(key string) ([]byte, bool) {
-	val, exists := s.data[key]
+	entry, exists := s.data[key]
 	if !exists {
 		return nil, false
 	}
 
-	return bytes.Clone(val), true
+	// lazy expiration
+	if entry.ExpiresAt != nil &&
+		!time.Now().Before(*entry.ExpiresAt) {
+		s.Delete(key)
+		return nil, false
+	}
+
+	return bytes.Clone(entry.Value), true
 }
 
 func (s *Store) Delete(key string) bool {
@@ -41,16 +64,25 @@ func (s *Store) Delete(key string) bool {
 }
 
 func (s *Store) Exists(key string) bool {
-	_, exists := s.data[key]
+	entry, exists := s.data[key]
+	if entry.ExpiresAt != nil && !time.Now().Before(*entry.ExpiresAt) {
+		delete(s.data, key)
+		return false
+	}
 	return exists
 }
 
 func (s *Store) Incr(key string) (int64, error) {
 	var number int64
 
-	val, exists := s.data[key]
+	entry, exists := s.data[key]
 	if exists {
-		parsed, err := strconv.ParseInt(string(val), 10, 64)
+		if entry.ExpiresAt != nil && !time.Now().Before(*entry.ExpiresAt) {
+			delete(s.data, key)
+			return 0, errors.New("entry is already expired")
+		}
+
+		parsed, err := strconv.ParseInt(string(entry.Value), 10, 64)
 		if err != nil {
 			return 0, errors.New("value is not an integer or out of range")
 		}
@@ -63,7 +95,20 @@ func (s *Store) Incr(key string) (int64, error) {
 
 	number++
 
-	s.Set(key, []byte(strconv.FormatInt(number, 10)))
+	entry.Value = []byte(strconv.FormatInt(number, 10))
+	s.data[key] = entry
 
 	return number, nil
+}
+
+func (s *Store) Expire(key string, duration time.Time) error {
+	panic("implement me")
+}
+
+func (s *Store) CleanupExpired() {
+	for key, entry := range s.data {
+		if !entry.ExpiresAt.IsZero() && !time.Now().Before(*entry.ExpiresAt) {
+			delete(s.data, key)
+		}
+	}
 }

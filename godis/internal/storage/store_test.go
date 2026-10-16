@@ -26,7 +26,7 @@ func TestNewStore(t *testing.T) {
 func TestSetAndGet(t *testing.T) {
 	store := NewStore()
 
-	store.Set("user", []byte("John"))
+	store.Set("user", []byte("John"), nil)
 
 	value, exists := store.Get("user")
 	if !exists {
@@ -41,8 +41,8 @@ func TestSetAndGet(t *testing.T) {
 func TestSetOverwritesExistingValue(t *testing.T) {
 	store := NewStore()
 
-	store.Set("user", []byte("John"))
-	store.Set("user", []byte("Jane"))
+	store.Set("user", []byte("John"), nil)
+	store.Set("user", []byte("Jane"), nil)
 
 	value, exists := store.Get("user")
 	if !exists {
@@ -74,7 +74,7 @@ func TestGetNonexistentKey(t *testing.T) {
 
 func TestDelete(t *testing.T) {
 	store := NewStore()
-	store.Set("user", []byte("John"))
+	store.Set("user", []byte("John"), nil)
 
 	if !store.Delete("user") {
 		t.Fatal("expected deletion of existing key to return true")
@@ -96,7 +96,7 @@ func TestExists(t *testing.T) {
 		t.Fatal("expected key not to exist")
 	}
 
-	store.Set("user", []byte("John"))
+	store.Set("user", []byte("John"), nil)
 
 	if !store.Exists("user") {
 		t.Fatal("expected key to exist")
@@ -123,7 +123,7 @@ func TestEmptyAndBinarySafeValues(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			store := NewStore()
-			store.Set("key", tt.value)
+			store.Set("key", tt.value, nil)
 
 			got, exists := store.Get("key")
 			if !exists {
@@ -141,7 +141,7 @@ func TestSetCopiesInput(t *testing.T) {
 	store := NewStore()
 	original := []byte("John")
 
-	store.Set("user", original)
+	store.Set("user", original, nil)
 
 	// Modify the original input after storing it.
 	original[0] = 'X'
@@ -154,7 +154,7 @@ func TestSetCopiesInput(t *testing.T) {
 
 func TestGetReturnsCopy(t *testing.T) {
 	store := NewStore()
-	store.Set("user", []byte("John"))
+	store.Set("user", []byte("John"), nil)
 
 	value, _ := store.Get("user")
 
@@ -187,7 +187,7 @@ func TestIncr(t *testing.T) {
 			store := NewStore()
 
 			if tt.exists {
-				store.Set("counter", tt.initial)
+				store.Set("counter", tt.initial, nil)
 			}
 
 			result, err := store.Incr("counter")
@@ -240,7 +240,7 @@ func TestIncrInvalidValue(t *testing.T) {
 	for _, value := range tests {
 		t.Run(value, func(t *testing.T) {
 			store := NewStore()
-			store.Set("counter", []byte(value))
+			store.Set("counter", []byte(value), nil)
 
 			_, err := store.Incr("counter")
 			if err == nil {
@@ -258,7 +258,7 @@ func TestIncrInvalidValue(t *testing.T) {
 
 func TestIncrOverflow(t *testing.T) {
 	store := NewStore()
-	store.Set("counter", []byte(strconv.FormatInt(math.MaxInt64, 10)))
+	store.Set("counter", []byte(strconv.FormatInt(math.MaxInt64, 10)), nil)
 
 	_, err := store.Incr("counter")
 	if err == nil {

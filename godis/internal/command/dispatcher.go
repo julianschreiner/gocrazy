@@ -2,7 +2,9 @@ package command
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/julianschreiner/godis/internal/protocol"
 	"github.com/julianschreiner/godis/internal/storage"
@@ -45,6 +47,10 @@ func (d *Dispatcher) Execute(args [][]byte) []byte {
 	default:
 		return d.encoder.EncodeError(ErrUnknownCommand)
 	}
+}
+
+func (d *Dispatcher) CleanupExpired() {
+	d.store.CleanupExpired()
 }
 
 func (d *Dispatcher) handleIncr(args [][]byte) []byte {
@@ -116,7 +122,23 @@ func (d *Dispatcher) handleGet(args [][]byte) []byte {
 func (d *Dispatcher) handleSet(args [][]byte) []byte {
 	switch len(args) {
 	case 2:
-		d.store.Set(string(args[0]), args[1])
+		d.store.Set(string(args[0]), args[1], nil)
+		return d.encoder.EncodeSimpleString("OK")
+	case 4:
+		// SET key value EX seconds
+		if !strings.EqualFold(string(args[2]), "EX") {
+			return d.encoder.EncodeError("ERR syntax error")
+		}
+
+		seconds, err := strconv.ParseInt(string(args[3]), 10, 64)
+		if err != nil || seconds <= 0 {
+			return d.encoder.EncodeError("ERR invalid expire time in 'set' command")
+		}
+
+		expiration := time.Now().Add(time.Duration(seconds) * time.Second)
+		expiresAt := &expiration
+
+		d.store.Set(string(args[0]), args[1], expiresAt)
 		return d.encoder.EncodeSimpleString("OK")
 	default:
 		return d.encoder.EncodeError(

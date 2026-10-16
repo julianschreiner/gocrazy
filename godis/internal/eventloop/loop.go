@@ -40,6 +40,9 @@ func NewLoop(
 }
 
 func (l *Loop) Run(ctx context.Context) error {
+	const cleanupInterval = time.Second
+	lastCleanup := time.Now()
+
 	for {
 		if ctx.Err() != nil {
 			return nil
@@ -54,6 +57,11 @@ func (l *Loop) Run(ctx context.Context) error {
 			if err := l.handleEvent(event); err != nil {
 				return err
 			}
+		}
+
+		if time.Since(lastCleanup) >= cleanupInterval {
+			l.dispatcher.CleanupExpired()
+			lastCleanup = time.Now()
 		}
 	}
 }
