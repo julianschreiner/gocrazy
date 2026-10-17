@@ -11,6 +11,8 @@ const (
 	CommandExists GodisCommand = "EXISTS"
 	CommandIncr   GodisCommand = "INCR"
 	CommandKeys   GodisCommand = "KEYS"
+	CommandExpire GodisCommand = "EXPIRE"
+	CommandTTL    GodisCommand = "TTL"
 )
 
 type GodisCommandError string

@@ -47,6 +47,10 @@ func (d *Dispatcher) Execute(args [][]byte) []byte {
 		return d.handleIncr(args[1:])
 	case CommandKeys:
 		return d.handleKeys(args[1:])
+	case CommandExpire:
+		return d.handleExpire(args[1:])
+	case CommandTTL:
+		return d.handleTTL(args[1:])
 	default:
 		return d.encoder.EncodeError(ErrUnknownCommand)
 	}
@@ -191,6 +195,38 @@ func (d *Dispatcher) handleKeys(args [][]byte) []byte {
 	default:
 		return d.encoder.EncodeError(
 			fmt.Sprintf(ErrWrongNumberOfArgs, "keys"),
+		)
+	}
+}
+
+func (d *Dispatcher) handleExpire(args [][]byte) []byte {
+	switch len(args) {
+	case 2:
+		dur, err := time.ParseDuration(string(args[1]) + "s")
+		if err != nil {
+			return d.encoder.EncodeNullBulkString()
+		}
+
+		err = d.store.Expire(string(args[0]), dur)
+		if err != nil {
+			return d.encoder.EncodeNullBulkString()
+		}
+
+		return d.encoder.EncodeSimpleString("OK")
+	default:
+		return d.encoder.EncodeError(
+			fmt.Sprintf(ErrWrongNumberOfArgs, "expire"),
+		)
+	}
+}
+
+func (d *Dispatcher) handleTTL(args [][]byte) []byte {
+	switch len(args) {
+	case 1:
+		return d.encoder.EncodeInteger(int64(d.store.TTL(string(args[0]))))
+	default:
+		return d.encoder.EncodeError(
+			fmt.Sprintf(ErrWrongNumberOfArgs, "ttl"),
 		)
 	}
 }

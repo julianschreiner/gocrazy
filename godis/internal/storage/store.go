@@ -102,8 +102,31 @@ func (s *Store) Incr(key string) (int64, error) {
 	return number, nil
 }
 
-func (s *Store) Expire(key string, duration time.Time) error {
-	panic("implement me")
+func (s *Store) Expire(key string, duration time.Duration) error {
+	entry, exists := s.data[key]
+	if !exists {
+		return errors.New("key doesnt exist")
+	}
+
+	newTTL := time.Now().Add(duration)
+	entry.ExpiresAt = &newTTL
+
+	s.data[key] = entry
+
+	return nil
+}
+
+func (s *Store) TTL(key string) int {
+	entry, exists := s.data[key]
+	if !exists {
+		return -2
+	}
+
+	if entry.ExpiresAt == nil || entry.ExpiresAt.IsZero() {
+		return -1
+	}
+
+	return int(time.Until(*entry.ExpiresAt).Seconds())
 }
 
 func (s *Store) CleanupExpired() {
