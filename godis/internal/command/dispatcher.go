@@ -1,6 +1,7 @@
 package command
 
 import (
+	"bytes"
 	"fmt"
 	"strconv"
 	"strings"
@@ -44,6 +45,8 @@ func (d *Dispatcher) Execute(args [][]byte) []byte {
 		return d.handleExists(args[1:])
 	case CommandIncr:
 		return d.handleIncr(args[1:])
+	case CommandKeys:
+		return d.handleKeys(args[1:])
 	default:
 		return d.encoder.EncodeError(ErrUnknownCommand)
 	}
@@ -167,6 +170,27 @@ func (d *Dispatcher) handleEcho(args [][]byte) []byte {
 	default:
 		return d.encoder.EncodeError(
 			fmt.Sprintf(ErrWrongNumberOfArgs, "echo"),
+		)
+	}
+}
+
+func (d *Dispatcher) handleKeys(args [][]byte) []byte {
+	switch len(args) {
+	case 1:
+		var pattern string
+		pattern = string(args[0])
+		if bytes.Equal(args[0], []byte("*")) {
+			pattern = string([]byte("."))
+		}
+
+		keys, found, err := d.store.GetKeys(pattern)
+		if !found || err != nil {
+			return d.encoder.EncodeNullBulkString()
+		}
+		return d.encoder.EncodeBulkStringArray(keys)
+	default:
+		return d.encoder.EncodeError(
+			fmt.Sprintf(ErrWrongNumberOfArgs, "keys"),
 		)
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"math"
+	"regexp"
 	"strconv"
 	"time"
 )
@@ -107,8 +108,29 @@ func (s *Store) Expire(key string, duration time.Time) error {
 
 func (s *Store) CleanupExpired() {
 	for key, entry := range s.data {
-		if !entry.ExpiresAt.IsZero() && !time.Now().Before(*entry.ExpiresAt) {
+		if entry.ExpiresAt != nil && !time.Now().Before(*entry.ExpiresAt) {
 			delete(s.data, key)
 		}
 	}
+}
+
+func (s *Store) GetKeys(pattern string) ([][]byte, bool, error) {
+	var result [][]byte
+	regex, err := regexp.Compile(pattern)
+	if err != nil {
+		return nil, false, err
+	}
+
+	for key := range s.data {
+		transformedKey := []byte(key)
+		if regex.Match(transformedKey) {
+			result = append(result, transformedKey)
+		}
+	}
+
+	if len(result) == 0 {
+		return nil, false, err
+	}
+
+	return result, true, nil
 }

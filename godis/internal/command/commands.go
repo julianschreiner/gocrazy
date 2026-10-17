@@ -10,6 +10,7 @@ const (
 	CommandDel    GodisCommand = "DEL"
 	CommandExists GodisCommand = "EXISTS"
 	CommandIncr   GodisCommand = "INCR"
+	CommandKeys   GodisCommand = "KEYS"
 )
 
 type GodisCommandError string
