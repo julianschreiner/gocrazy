@@ -11,8 +11,8 @@ import (
 	"os"
 
 	"github.com/google/uuid"
-	"github.com/julianschreiner/distributedcrawler/internal/messaging"
-	"github.com/julianschreiner/distributedcrawler/internal/shared"
+	"github.com/rlat3d/distributedcrawler/internal/messaging"
+	"github.com/rlat3d/distributedcrawler/internal/shared"
 
 	"github.com/nats-io/nats.go/jetstream"
 )

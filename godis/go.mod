@@ -1,4 +1,4 @@
-module github.com/julianschreiner/godis
+module github.com/rlat3d/godis
 
 go 1.27.1
 

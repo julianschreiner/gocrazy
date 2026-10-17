@@ -1,4 +1,4 @@
-module github.com/julianschreiner/govis-jetstream
+module github.com/rlat3d/govis-jetstream
 
 go 1.26.0
 

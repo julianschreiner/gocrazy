@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/julianschreiner/roundrobin/internal/process"
+	"github.com/rlat3d/roundrobin/internal/process"
 )
 
 func main() {

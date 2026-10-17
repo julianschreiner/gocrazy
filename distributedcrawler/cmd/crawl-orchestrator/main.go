@@ -7,8 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	coordinator "github.com/julianschreiner/distributedcrawler/internal/coordinator"
-	messenger "github.com/julianschreiner/distributedcrawler/internal/messaging"
+	coordinator "github.com/rlat3d/distributedcrawler/internal/coordinator"
+	messenger "github.com/rlat3d/distributedcrawler/internal/messaging"
 )
 
 // TODO:

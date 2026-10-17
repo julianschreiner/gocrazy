@@ -7,21 +7,31 @@ import (
 	"strings"
 	"time"
 
-	"github.com/julianschreiner/godis/internal/protocol"
-	"github.com/julianschreiner/godis/internal/storage"
+	"github.com/rlat3d/godis/internal/persistence"
+	"github.com/rlat3d/godis/internal/protocol"
+	"github.com/rlat3d/godis/internal/storage"
 )
 
 type Dispatcher struct {
 	encoder protocol.Encoder
 	store   *storage.Store
+	aof     *persistence.AOF
 }
 
-func NewDispatcher(encoder protocol.Encoder, store *storage.Store) *Dispatcher {
+func NewDispatcher(encoder protocol.Encoder, store *storage.Store, aof *persistence.AOF) *Dispatcher {
 	return &Dispatcher{
 		encoder: encoder,
 		store:   store,
+		aof:     aof,
 	}
 }
+
+// TODO:
+// For example, when processing SET user John:
+// 1. Dispatcher validates the arguments.
+// 2.  Dispatcher appends the mutation to the AOF.
+// 3. Dispatcher updates the in-memory store.
+// 4. Dispatcher returns +OK.
 
 func (d *Dispatcher) Execute(args [][]byte) []byte {
 	if len(args) == 0 {

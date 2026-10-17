@@ -5,7 +5,7 @@ import (
 	"time"
 
 	tea "charm.land/bubbletea/v2"
-	"github.com/julianschreiner/govis-jetstream/internal/observe"
+	"github.com/rlat3d/govis-jetstream/internal/observe"
 )
 
 func refreshTick() tea.Cmd {

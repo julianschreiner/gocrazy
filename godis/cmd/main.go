@@ -4,11 +4,11 @@ import (
 	"context"
 	"log"
 
-	"github.com/julianschreiner/godis/internal/command"
-	"github.com/julianschreiner/godis/internal/eventloop"
-	"github.com/julianschreiner/godis/internal/network"
-	"github.com/julianschreiner/godis/internal/protocol"
-	"github.com/julianschreiner/godis/internal/storage"
+	"github.com/rlat3d/godis/internal/command"
+	"github.com/rlat3d/godis/internal/eventloop"
+	"github.com/rlat3d/godis/internal/network"
+	"github.com/rlat3d/godis/internal/protocol"
+	"github.com/rlat3d/godis/internal/storage"
 	"golang.org/x/sys/unix"
 )
 
@@ -25,6 +25,18 @@ func main() {
 	}
 	defer pollerLinux.Close()
 
+	// TODO
+	// main.go
+	// |
+	// ├── Create Store
+	//|
+	//├── Open AOF
+	//|
+	//├── Replay saved commands into Store
+	// |
+	//├── Create Dispatcher
+	//|
+	//└── Start Event Loop
 	dispatcher := command.NewDispatcher(
 		protocol.NewResp2Encoder(),
 		storage.NewStore(),

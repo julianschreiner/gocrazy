@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/julianschreiner/govis-jetstream/internal/observe"
+	"github.com/rlat3d/govis-jetstream/internal/observe"
 )
 
 const (

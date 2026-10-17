@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/julianschreiner/godis/internal/command"
-	"github.com/julianschreiner/godis/internal/network"
-	"github.com/julianschreiner/godis/internal/protocol"
+	"github.com/rlat3d/godis/internal/command"
+	"github.com/rlat3d/godis/internal/network"
+	"github.com/rlat3d/godis/internal/protocol"
 	"golang.org/x/sys/unix"
 )
 

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/julianschreiner/godis/internal/protocol"
-	"github.com/julianschreiner/godis/internal/storage"
+	"github.com/rlat3d/godis/internal/protocol"
+	"github.com/rlat3d/godis/internal/storage"
 )
 
 func newTestDispatcher() *Dispatcher {

@@ -12,7 +12,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/julianschreiner/govis-jetstream/internal/demo"
+	"github.com/rlat3d/govis-jetstream/internal/demo"
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 )

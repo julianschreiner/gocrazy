@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/julianschreiner/distributedcrawler/internal/api"
-	messenger "github.com/julianschreiner/distributedcrawler/internal/messaging"
+	"github.com/rlat3d/distributedcrawler/internal/api"
+	messenger "github.com/rlat3d/distributedcrawler/internal/messaging"
 )
 
 func main() {

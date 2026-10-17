@@ -1,4 +1,4 @@
-module github.com/julianschreiner/distributedcrawler
+module github.com/rlat3d/distributedcrawler
 
 go 1.27.1
 
